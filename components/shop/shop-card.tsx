@@ -33,7 +33,7 @@ export function ShopCard({ item }: ShopCardProps) {
         className="w-full h-40 object-cover"
       />
       <div className="p-2">
-        <h3 className="text-sm font-bold truncate">{item.name}</h3>
+        <h3 className="text-sm font-bold truncate text-black">{item.name}</h3>
       </div>
       {isHovered && (
         <div className="absolute inset-0 bg-black bg-opacity-75 p-4 flex flex-col justify-center transition-opacity duration-300 ease-in-out">
@@ -41,7 +41,7 @@ export function ShopCard({ item }: ShopCardProps) {
         </div>
       )}
       <button
-        className="absolute bottom-2 right-2 flex items-center px-3 py-2 rounded-md text-white font-bold transition-colors"
+        className="absolute bottom-2 right-2 flex items-center px-3 py-2 rounded-md font-bold transition-colors text-black border-2 border-black"
         style={{ backgroundColor: activeColor }}
       >
         <CoinsIcon className="w-4 h-4 mr-1" />

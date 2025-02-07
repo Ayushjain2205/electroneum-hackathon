@@ -20,28 +20,32 @@ export default function ShopPage() {
         style={{ backgroundColor: activeLighterColor }}
       >
         <div className="container py-8">
-          <h1 className="text-4xl font-display mb-4">Zoey's Shop</h1>
+          <h1 className="text-4xl font-display mb-4 text-black">Zoey's Shop</h1>
           <div className="mb-4 flex space-x-4">
             <button
               onClick={() => setActiveTab("abilities")}
-              className={`px-4 py-2 rounded-md font-bold transition-colors ${
-                activeTab === "abilities" ? "text-white" : "text-black"
-              }`}
+              className={`px-4 py-2 rounded-md font-bold transition-colors border-2 border-black
+                ${
+                  activeTab === "abilities"
+                    ? "text-black"
+                    : "text-black bg-white"
+                }`}
               style={{
                 backgroundColor:
-                  activeTab === "abilities" ? activeColor : "transparent",
+                  activeTab === "abilities" ? activeColor : undefined,
               }}
             >
               Abilities
             </button>
             <button
               onClick={() => setActiveTab("gifts")}
-              className={`px-4 py-2 rounded-md font-bold transition-colors ${
-                activeTab === "gifts" ? "text-white" : "text-black"
-              }`}
+              className={`px-4 py-2 rounded-md font-bold transition-colors border-2 border-black
+                ${
+                  activeTab === "gifts" ? "text-black" : "text-black bg-white"
+                }`}
               style={{
                 backgroundColor:
-                  activeTab === "gifts" ? activeColor : "transparent",
+                  activeTab === "gifts" ? activeColor : undefined,
               }}
             >
               Gifts
