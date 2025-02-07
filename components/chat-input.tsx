@@ -5,9 +5,10 @@ import { type FormEvent, useState } from "react";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
+  activeColor: string;
 }
 
-export function ChatInput({ onSend }: ChatInputProps) {
+export function ChatInput({ onSend, activeColor }: ChatInputProps) {
   const [message, setMessage] = useState("");
 
   const handleSubmit = (e: FormEvent) => {
@@ -20,7 +21,7 @@ export function ChatInput({ onSend }: ChatInputProps) {
 
   return (
     <div className="border-t-2 border-black bg-white p-4">
-      <form onSubmit={handleSubmit} className="container mx-auto max-w-8xl">
+      <form onSubmit={handleSubmit} className="container mx-auto max-w-4xl">
         <div className="flex gap-2">
           <input
             type="text"
@@ -31,7 +32,8 @@ export function ChatInput({ onSend }: ChatInputProps) {
           />
           <button
             type="submit"
-            className="p-3 bg-primary text-primary-foreground border-2 border-black rounded-lg shadow-brutal hover:shadow-brutal-lg transition-shadow"
+            className="p-3 text-black border-2 border-black rounded-lg shadow-brutal hover:shadow-brutal-lg transition-shadow"
+            style={{ backgroundColor: activeColor }}
           >
             <Send className="w-5 h-5" />
           </button>

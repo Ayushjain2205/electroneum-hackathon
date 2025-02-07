@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { Message } from "./message";
 import { ChatInput } from "./chat-input";
+import { useMode } from "@/contexts/ModeContext";
 
 export function ChatInterface() {
+  const { activeColor } = useMode();
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -19,17 +21,18 @@ export function ChatInterface() {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-82px)]">
+    <div className="flex-1 flex flex-col h-[calc(100vh-64px)] bg-white">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <Message
             key={message.id}
             content={message.content}
             isUser={message.isUser}
+            activeColor={activeColor}
           />
         ))}
       </div>
-      <ChatInput onSend={handleSendMessage} />
+      <ChatInput onSend={handleSendMessage} activeColor={activeColor} />
     </div>
   );
 }
