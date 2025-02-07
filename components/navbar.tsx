@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Rubik_Doodle_Shadow } from "next/font/google";
 import { useMode } from "@/contexts/ModeContext";
-import { Coins, User } from "lucide-react";
+import { User, CoinsIcon as Coin } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,7 +78,7 @@ export function Nav() {
             ))}
           </div>
           <div className="flex items-center gap-2 px-3 py-1 bg-white border-2 border-black rounded-full shadow-brutal">
-            <Coins className="w-6 h-6 text-black" />
+            <Coin className="w-6 h-6 text-black" />
             <span className="text-lg font-bold">1000</span>
           </div>
           <DropdownMenu>
