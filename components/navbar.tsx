@@ -12,7 +12,7 @@ const rubikDoodleShadow = Rubik_Doodle_Shadow({
 });
 
 const navItems = [
-  { name: "Talk", href: "/talk" },
+  { name: "Talk", href: "/" },
   { name: "Shop", href: "/shop" },
   { name: "Memory", href: "/memory" },
 ];
