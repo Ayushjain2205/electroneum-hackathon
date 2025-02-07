@@ -6,7 +6,7 @@ import { ChatInput } from "./chat-input";
 import { useMode } from "@/contexts/ModeContext";
 
 export function ChatInterface() {
-  const { activeColor } = useMode();
+  const { activeColor, activeLighterColor, activeLightColor } = useMode();
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -21,7 +21,10 @@ export function ChatInterface() {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-64px)] bg-white">
+    <div
+      className="flex-1 flex flex-col h-[calc(100vh-64px)]"
+      style={{ backgroundColor: activeLighterColor }}
+    >
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <Message
@@ -32,7 +35,7 @@ export function ChatInterface() {
           />
         ))}
       </div>
-      <ChatInput onSend={handleSendMessage} activeColor={activeColor} />
+      <ChatInput onSend={handleSendMessage} />
     </div>
   );
 }

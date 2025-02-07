@@ -9,6 +9,7 @@ type ModeContextType = {
   setActiveMode: (mode: ModeType) => void;
   activeColor: string;
   activeLightColor: string;
+  activeLighterColor: string;
 };
 
 const ModeContext = createContext<ModeContextType | undefined>(undefined);
@@ -21,6 +22,7 @@ export function ModeProvider({ children }: { children: React.ReactNode }) {
     setActiveMode,
     activeColor: modeColors[activeMode].main,
     activeLightColor: modeColors[activeMode].light,
+    activeLighterColor: modeColors[activeMode].lighter,
   };
 
   return <ModeContext.Provider value={value}>{children}</ModeContext.Provider>;
