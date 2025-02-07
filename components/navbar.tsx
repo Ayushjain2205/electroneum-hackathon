@@ -5,6 +5,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Rubik_Doodle_Shadow } from "next/font/google";
 import { useMode } from "@/contexts/ModeContext";
+import { Coins, User } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const rubikDoodleShadow = Rubik_Doodle_Shadow({
   weight: "400",
@@ -12,7 +20,6 @@ const rubikDoodleShadow = Rubik_Doodle_Shadow({
 });
 
 const navItems = [
-  { name: "Talk", href: "/" },
   { name: "Shop", href: "/shop" },
   { name: "Memory", href: "/memory" },
 ];
@@ -49,25 +56,45 @@ export function Nav() {
             />
           </div>
         </Link>
-        <div className="flex gap-2">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "px-4 py-2 text-lg font-display font-bold transition-colors border-2 border-black rounded-md hover:bg-opacity-80",
-                pathname === item.href
-                  ? "text-black shadow-brutal"
-                  : "bg-white text-foreground hover:bg-gray-100"
-              )}
-              style={{
-                backgroundColor:
-                  pathname === item.href ? activeColor : undefined,
-              }}
-            >
-              {item.name}
-            </Link>
-          ))}
+        <div className="flex items-center gap-4">
+          <div className="flex gap-2">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "px-4 py-2 text-lg font-display font-bold transition-colors border-2 border-black rounded-md hover:bg-opacity-80",
+                  pathname === item.href
+                    ? "text-black shadow-brutal"
+                    : "bg-white text-foreground hover:bg-gray-50"
+                )}
+                style={{
+                  backgroundColor:
+                    pathname === item.href ? activeColor : undefined,
+                }}
+              >
+                {item.name}
+              </Link>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1 bg-white border-2 border-black rounded-full shadow-brutal">
+            <Coins className="w-6 h-6 text-black" />
+            <span className="text-lg font-bold">1000</span>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="p-2 bg-white border-2 border-black rounded-full shadow-brutal hover:bg-gray-50 focus:outline-none">
+              <User className="w-6 h-6 text-black" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 bg-white border-2 border-black rounded-lg shadow-brutal">
+              <DropdownMenuItem className="hover:bg-gray-100 focus:bg-gray-100 focus:outline-none cursor-pointer">
+                My Account
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-black" />
+              <DropdownMenuItem className="hover:bg-gray-100 focus:bg-gray-100 focus:outline-none cursor-pointer">
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </nav>
