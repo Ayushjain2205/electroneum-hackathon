@@ -24,15 +24,15 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#B388FF", // Light purple from logo
+          DEFAULT: "#B388FF",
           foreground: "#ffffff",
         },
         secondary: {
-          DEFAULT: "#FFD5E5", // Soft pink
+          DEFAULT: "#FFD5E5",
           foreground: "#000000",
         },
         accent: {
-          DEFAULT: "#89CFF0", // Soft blue
+          DEFAULT: "#89CFF0",
           foreground: "#000000",
         },
         destructive: {
@@ -54,12 +54,7 @@ export default {
       },
       fontFamily: {
         sans: ["var(--font-space-grotesk)", "sans-serif"],
-        display: [
-          "-apple-system-chalk",
-          "ChalkboardSE-Regular",
-          "Chalkboard SE",
-          "sans-serif",
-        ],
+        display: ["var(--font-outfit)", "sans-serif"],
       },
       boxShadow: {
         brutal: "4px 4px 0px 0px rgba(0,0,0,1)",

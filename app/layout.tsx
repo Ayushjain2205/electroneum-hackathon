@@ -1,4 +1,4 @@
-import { Space_Grotesk } from "next/font/google";
+import { Space_Grotesk, Outfit } from "next/font/google";
 import "./globals.css";
 import type { ReactNode } from "react";
 import { ModeProvider } from "@/contexts/ModeContext";
@@ -8,9 +8,14 @@ const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
 });
 
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+});
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={spaceGrotesk.variable}>
+    <html lang="en" className={`${spaceGrotesk.variable} ${outfit.variable}`}>
       <body className="min-h-screen bg-[#FFFAF0] font-sans">
         <ModeProvider>{children}</ModeProvider>
       </body>
