@@ -3,17 +3,31 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Rubik_Doodle_Shadow } from "next/font/google";
 import { useMode } from "@/contexts/ModeContext";
 
+const rubikDoodleShadow = Rubik_Doodle_Shadow({
+  weight: "400",
+  subsets: ["latin"],
+});
+
 const navItems = [
-  { name: "Talk", href: "/" },
+  { name: "Talk", href: "/talk" },
   { name: "Shop", href: "/shop" },
   { name: "Memory", href: "/memory" },
 ];
 
+const modeIcons = {
+  bff: "https://img.icons8.com/wired/64/like--v1.png",
+  manager: "https://img.icons8.com/wired/64/briefcase.png",
+  coach: "https://img.icons8.com/wired/64/brain.png",
+  nutritionist: "https://img.icons8.com/wired/64/apple.png",
+  wellness: "https://img.icons8.com/wired/64/spa-flower.png",
+};
+
 export function Nav() {
   const pathname = usePathname();
-  const { activeColor, activeLightColor } = useMode();
+  const { activeMode, activeColor, activeLightColor } = useMode();
 
   return (
     <nav
@@ -22,7 +36,18 @@ export function Nav() {
     >
       <div className="container h-full flex items-center justify-between">
         <Link href="/" className="flex items-center space-x-2">
-          <img src="/zoey.svg" alt="Zoey" className="h-10" />
+          <div className="flex items-center space-x-2">
+            <span
+              className={`text-4xl font-bold ${rubikDoodleShadow.className} text-black`}
+            >
+              Zoey
+            </span>
+            <img
+              className="w-8 h-8"
+              src={modeIcons[activeMode] || "/placeholder.svg"}
+              alt={`${activeMode} mode icon`}
+            />
+          </div>
         </Link>
         <div className="flex gap-2">
           {navItems.map((item) => (
