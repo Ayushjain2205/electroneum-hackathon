@@ -13,6 +13,13 @@ const modes: { id: ModeType; name: string }[] = [
   { id: "wellness", name: "Wellness" },
 ];
 
+const traits = [
+  { name: "Empathy", value: 85 },
+  { name: "Wisdom", value: 78 },
+  { name: "Energy", value: 92 },
+  { name: "Creativity", value: 88 },
+];
+
 export function ModeSelector() {
   const { activeMode, setActiveMode, activeLightColor } = useMode();
 
@@ -41,14 +48,32 @@ export function ModeSelector() {
           </button>
         ))}
       </div>
-      <div className="mt-4 flex justify-center">
-        <div className="w-64 h-64 relative">
+      <div className="mt-2 mb-16 flex flex-col items-center">
+        <div className="w-64 h-64 relative mb-4">
           <Image
             src={`/modes/${activeMode}.svg`}
             alt={`${activeMode} mode`}
             layout="fill"
             objectFit="contain"
           />
+        </div>
+        <div className="w-full space-y-3">
+          {traits.map((trait) => (
+            <div key={trait.name} className="space-y-1 group">
+              <div className="flex justify-between text-sm font-medium">
+                <span>{trait.name}</span>
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  {trait.value}
+                </span>
+              </div>
+              <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-black"
+                  style={{ width: `${trait.value}%` }}
+                />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
