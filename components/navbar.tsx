@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Rubik_Doodle_Shadow } from "next/font/google";
 import { useMode } from "@/contexts/ModeContext";
 import { User, CoinsIcon as Coin } from "lucide-react";
-import { ConnectEmbed } from "thirdweb/react";
+import { ConnectEmbed, ConnectButton } from "thirdweb/react";
 import { client } from "@/lib/thirdweb";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import {
@@ -23,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
+import { baseSepolia } from "thirdweb/chains";
 
 const rubikDoodleShadow = Rubik_Doodle_Shadow({
   weight: "400",
@@ -92,7 +93,8 @@ export function Nav() {
               My Account
             </DropdownMenuItem>
             <DropdownMenuItem className="hover:bg-gray-100 focus:bg-gray-100 focus:outline-none cursor-pointer">
-              {account.address.slice(0, 6)}...{account.address.slice(-4)}
+              {/* {account.address.slice(0, 6)}...{account.address.slice(-4)} */}
+              <ConnectButton client={client} />
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-black" />
             <DropdownMenuItem
@@ -126,6 +128,7 @@ export function Nav() {
                 client={client}
                 theme="light"
                 onConnect={() => setShowConnectEmbed(false)}
+                chain={baseSepolia}
               />
             </div>
           </DialogContent>
