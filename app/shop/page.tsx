@@ -5,10 +5,11 @@ import { useMode } from "@/contexts/ModeContext";
 import { Nav } from "@/components/navbar";
 import { AbilitiesTab } from "@/components/shop/abilities-tab";
 import { GiftsTab } from "@/components/shop/gifts-tab";
+import { BoostsTab } from "@/components/shop/boosts-tab";
 
 export default function ShopPage() {
   const { activeLighterColor, activeColor } = useMode();
-  const [activeTab, setActiveTab] = useState<"abilities" | "gifts">(
+  const [activeTab, setActiveTab] = useState<"abilities" | "gifts" | "boosts">(
     "abilities"
   );
 
@@ -50,11 +51,26 @@ export default function ShopPage() {
             >
               Gifts
             </button>
+            <button
+              onClick={() => setActiveTab("boosts")}
+              className={`px-4 py-2 rounded-md font-bold transition-colors border-2 border-black
+                ${
+                  activeTab === "boosts" ? "text-black" : "text-black bg-white"
+                }`}
+              style={{
+                backgroundColor:
+                  activeTab === "boosts" ? activeColor : undefined,
+              }}
+            >
+              Boosts
+            </button>
           </div>
         </div>
         <div className="flex-1 overflow-y-auto pt-2">
           <div className="container pb-8">
-            {activeTab === "abilities" ? <AbilitiesTab /> : <GiftsTab />}
+            {activeTab === "abilities" && <AbilitiesTab />}
+            {activeTab === "gifts" && <GiftsTab />}
+            {activeTab === "boosts" && <BoostsTab />}
           </div>
         </div>
       </main>
