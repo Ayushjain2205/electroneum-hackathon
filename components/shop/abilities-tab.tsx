@@ -5,25 +5,25 @@ const abilities = [
     name: "Novice Pack",
     description: "+5 to any attribute, 1 random boost, Basic training guide",
     price: 500,
-    image: "/placeholder.svg?text=Novice+Pack",
+    image: "/abilities/ability1.png",
   },
   {
     name: "Adept Bundle",
     description: "+10 to any attribute, 2 random boosts, Intermediate guide",
     price: 1000,
-    image: "/placeholder.svg?text=Adept+Bundle",
+    image: "/abilities/ability2.png",
   },
   {
     name: "Master's Cache",
     description: "+20 to any attribute, 3 premium boosts, Advanced techniques",
     price: 2000,
-    image: "/placeholder.svg?text=Master's+Cache",
+    image: "/abilities/ability3.png",
   },
   {
     name: "Ultimate Upgrade",
     description: "+50 to any attribute, Full boost set, Expert mastery guide",
     price: 5000,
-    image: "/placeholder.svg?text=Ultimate+Upgrade",
+    image: "/abilities/ability4.png",
   },
 ];
 

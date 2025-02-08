@@ -24,6 +24,19 @@ export default function ShopPage() {
           <h1 className="text-4xl font-display mb-4 text-black">Zoey's Shop</h1>
           <div className="mb-4 flex space-x-4">
             <button
+              onClick={() => setActiveTab("gifts")}
+              className={`px-4 py-2 rounded-md font-bold transition-colors border-2 border-black
+                ${
+                  activeTab === "gifts" ? "text-black" : "text-black bg-white"
+                }`}
+              style={{
+                backgroundColor:
+                  activeTab === "gifts" ? activeColor : undefined,
+              }}
+            >
+              Gifts
+            </button>
+            <button
               onClick={() => setActiveTab("abilities")}
               className={`px-4 py-2 rounded-md font-bold transition-colors border-2 border-black
                 ${
@@ -37,19 +50,6 @@ export default function ShopPage() {
               }}
             >
               Abilities
-            </button>
-            <button
-              onClick={() => setActiveTab("gifts")}
-              className={`px-4 py-2 rounded-md font-bold transition-colors border-2 border-black
-                ${
-                  activeTab === "gifts" ? "text-black" : "text-black bg-white"
-                }`}
-              style={{
-                backgroundColor:
-                  activeTab === "gifts" ? activeColor : undefined,
-              }}
-            >
-              Gifts
             </button>
             <button
               onClick={() => setActiveTab("boosts")}

@@ -30,7 +30,7 @@ export function ShopCard({ item }: ShopCardProps) {
         alt={item.name}
         width={300}
         height={300}
-        className="w-full h-40 object-cover"
+        className="w-full h-40 object-contain"
       />
       <div className="p-2">
         <h3 className="text-sm font-bold truncate text-black">{item.name}</h3>
