@@ -6,6 +6,9 @@ import { usePathname } from "next/navigation";
 import { Rubik_Doodle_Shadow } from "next/font/google";
 import { useMode } from "@/contexts/ModeContext";
 import { User, CoinsIcon as Coin } from "lucide-react";
+import { ConnectButton } from "thirdweb/react";
+import { client } from "@/lib/thirdweb";
+import { useActiveAccount } from "thirdweb/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +38,7 @@ const modeIcons = {
 export function Nav() {
   const pathname = usePathname();
   const { activeMode, activeColor, activeLightColor } = useMode();
+  const account = useActiveAccount();
 
   return (
     <nav
@@ -81,20 +85,29 @@ export function Nav() {
             <Coin className="w-6 h-6 text-black" />
             <span className="text-lg font-bold">1000</span>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger className="p-2 bg-white border-2 border-black rounded-full shadow-brutal hover:bg-gray-50 focus:outline-none">
-              <User className="w-6 h-6 text-black" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-white border-2 border-black rounded-lg shadow-brutal">
-              <DropdownMenuItem className="hover:bg-gray-100 focus:bg-gray-100 focus:outline-none cursor-pointer">
-                My Account
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-black" />
-              <DropdownMenuItem className="hover:bg-gray-100 focus:bg-gray-100 focus:outline-none cursor-pointer">
-                Log out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {account ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger className="p-2 bg-white border-2 border-black rounded-full shadow-brutal hover:bg-gray-50 focus:outline-none">
+                <User className="w-6 h-6 text-black" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 bg-white border-2 border-black rounded-lg shadow-brutal">
+                <DropdownMenuItem className="hover:bg-gray-100 focus:bg-gray-100 focus:outline-none cursor-pointer">
+                  My Account
+                </DropdownMenuItem>
+                <DropdownMenuItem className="hover:bg-gray-100 focus:bg-gray-100 focus:outline-none cursor-pointer">
+                  {account.address.slice(0, 6)}...{account.address.slice(-4)}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-black" />
+                <DropdownMenuItem className="hover:bg-gray-100 focus:bg-gray-100 focus:outline-none cursor-pointer">
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="px-4 py-2 text-lg font-bold bg-white border-2 border-black rounded-md shadow-brutal hover:bg-gray-50">
+              <ConnectButton client={client} />
+            </div>
+          )}
         </div>
       </div>
     </nav>
