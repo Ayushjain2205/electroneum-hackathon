@@ -62,3 +62,8 @@ body {
 .listening .blob {
   animation-duration: 3s;
 }
+
+.tw-connect-wallet {
+  height: 48px !important;
+  background-color: white !important;
+}

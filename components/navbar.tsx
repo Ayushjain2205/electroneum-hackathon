@@ -5,8 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Rubik_Doodle_Shadow } from "next/font/google";
 import { useMode } from "@/contexts/ModeContext";
-import { User, CoinsIcon as Coin } from "lucide-react";
-import { ConnectEmbed, ConnectButton } from "thirdweb/react";
+import { User, CoinsIcon as Coin, Copy } from "lucide-react";
+import { ConnectButton } from "thirdweb/react";
 import { client } from "@/lib/thirdweb";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import {
@@ -43,25 +43,11 @@ const modeIcons = {
   wellness: "https://img.icons8.com/wired/64/spa-flower.png",
 };
 
-export function Nav() {
-  const pathname = usePathname();
+// Separate client component for wallet functionality
+function WalletButton() {
   const router = useRouter();
-  const { activeMode, activeColor, activeLightColor } = useMode();
   const account = useActiveAccount();
   const activeWallet = useActiveWallet();
-  const [showConnectEmbed, setShowConnectEmbed] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
-
-  useEffect(() => {
-    if (account) {
-      setShowConnectEmbed(false);
-    }
-  }, [account]);
 
   const handleLogout = async () => {
     try {
@@ -74,68 +60,70 @@ export function Nav() {
     }
   };
 
-  // Prevent hydration issues by not rendering wallet-related UI until mounted
-  const renderAuthButton = () => {
-    if (!mounted) {
-      return (
-        <div className="w-[100px] h-[42px] bg-white border-2 border-black rounded-md shadow-brutal" />
-      );
+  const copyAddress = () => {
+    if (account?.address) {
+      navigator.clipboard.writeText(account.address);
     }
-
-    if (account) {
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger className="p-2 bg-white border-2 border-black rounded-full shadow-brutal hover:bg-gray-50 focus:outline-none">
-            <User className="w-6 h-6 text-black" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 bg-white border-2 border-black rounded-lg shadow-brutal">
-            <DropdownMenuItem className="hover:bg-gray-100 focus:bg-gray-100 focus:outline-none cursor-pointer">
-              My Account
-            </DropdownMenuItem>
-            <DropdownMenuItem className="hover:bg-gray-100 focus:bg-gray-100 focus:outline-none cursor-pointer">
-              {/* {account.address.slice(0, 6)}...{account.address.slice(-4)} */}
-              <ConnectButton client={client} />
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-black" />
-            <DropdownMenuItem
-              className="hover:bg-gray-100 focus:bg-gray-100 focus:outline-none cursor-pointer"
-              onClick={handleLogout}
-            >
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    }
-
-    return (
-      <>
-        <button
-          onClick={() => setShowConnectEmbed(true)}
-          className="px-4 py-2 text-lg font-bold bg-white border-2 border-black rounded-md shadow-brutal hover:bg-gray-50"
-        >
-          Login
-        </button>
-        <Dialog open={showConnectEmbed} onOpenChange={setShowConnectEmbed}>
-          <DialogContent className="bg-white border-2 border-black rounded-lg shadow-brutal sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-bold text-center">
-                Connect Wallet
-              </DialogTitle>
-            </DialogHeader>
-            <div className="p-4">
-              <ConnectEmbed
-                client={client}
-                theme="light"
-                onConnect={() => setShowConnectEmbed(false)}
-                chain={baseSepolia}
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
-      </>
-    );
   };
+
+  if (account) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger className="p-2 bg-white border-2 border-black rounded-full shadow-brutal hover:bg-gray-50 focus:outline-none">
+          <User className="w-6 h-6 text-black" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56 bg-white border-2 border-black rounded-lg shadow-brutal">
+          <DropdownMenuItem className="hover:bg-gray-100 focus:bg-gray-100 focus:outline-none cursor-pointer">
+            My Account
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="hover:bg-gray-100 focus:bg-gray-100 focus:outline-none cursor-pointer flex items-center justify-between"
+            onClick={copyAddress}
+          >
+            <span className="text-sm font-mono">
+              {account.address.slice(0, 6)}...{account.address.slice(-4)}
+            </span>
+            <Copy className="h-4 w-4 ml-2" />
+          </DropdownMenuItem>
+          <DropdownMenuSeparator className="bg-black" />
+          <div className="p-2">
+            <ConnectButton client={client} />
+          </div>
+          <DropdownMenuSeparator className="bg-black" />
+          <DropdownMenuItem
+            className="hover:bg-gray-100 focus:bg-gray-100 focus:outline-none cursor-pointer"
+            onClick={handleLogout}
+          >
+            Log out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  return (
+    <div className="h-[48px] bg-white hover:bg-gray-50 border-2 border-black rounded-md shadow-brutal overflow-hidden">
+      <ConnectButton client={client} />
+    </div>
+  );
+}
+
+function CoinsDisplay() {
+  const account = useActiveAccount();
+
+  if (!account) return null;
+
+  return (
+    <div className="flex items-center gap-2 px-3 py-1 bg-white border-2 border-black rounded-full shadow-brutal">
+      <Coin className="w-6 h-6 text-black" />
+      <span className="text-lg font-bold">1000</span>
+    </div>
+  );
+}
+
+export function Nav() {
+  const pathname = usePathname();
+  const { activeMode, activeColor, activeLightColor } = useMode();
 
   return (
     <nav
@@ -178,11 +166,8 @@ export function Nav() {
               </Link>
             ))}
           </div>
-          <div className="flex items-center gap-2 px-3 py-1 bg-white border-2 border-black rounded-full shadow-brutal">
-            <Coin className="w-6 h-6 text-black" />
-            <span className="text-lg font-bold">1000</span>
-          </div>
-          {renderAuthButton()}
+          <CoinsDisplay />
+          <WalletButton />
         </div>
       </div>
     </nav>
