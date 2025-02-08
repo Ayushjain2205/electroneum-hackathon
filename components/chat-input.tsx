@@ -1,14 +1,15 @@
 "use client";
 
-import { Send } from "lucide-react";
+import { Send, Phone } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { useMode } from "@/contexts/ModeContext";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
+  onCallStart: () => void;
 }
 
-export function ChatInput({ onSend }: ChatInputProps) {
+export function ChatInput({ onSend, onCallStart }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const { activeColor, activeLightColor } = useMode();
 
@@ -40,6 +41,14 @@ export function ChatInput({ onSend }: ChatInputProps) {
             style={{ backgroundColor: activeColor }}
           >
             <Send className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            onClick={onCallStart}
+            className="p-3 text-black border-2 border-black rounded-lg shadow-brutal hover:shadow-brutal-lg transition-shadow"
+            style={{ backgroundColor: activeColor }}
+          >
+            <Phone className="w-5 h-5" />
           </button>
         </div>
       </form>

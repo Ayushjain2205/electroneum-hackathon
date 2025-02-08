@@ -32,3 +32,33 @@
 body {
   @apply bg-background text-foreground;
 }
+
+@keyframes blob-animation {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  33% {
+    transform: scale(1.1) translate(20px, -10px);
+  }
+  66% {
+    transform: scale(0.9) translate(-20px, 10px);
+  }
+}
+
+.blob {
+  animation: blob-animation 7s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.blob:nth-child(2) {
+  animation-delay: -2s;
+}
+
+.blob:nth-child(3) {
+  animation-delay: -4s;
+}
+
+.listening .blob {
+  animation-duration: 3s;
+}
