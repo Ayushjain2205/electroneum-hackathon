@@ -7,15 +7,20 @@ import { useMode } from "@/contexts/ModeContext";
 interface ChatInputProps {
   onSend: (message: string) => void;
   onCallStart: () => void;
+  isLoading?: boolean;
 }
 
-export function ChatInput({ onSend, onCallStart }: ChatInputProps) {
+export function ChatInput({
+  onSend,
+  onCallStart,
+  isLoading = false,
+}: ChatInputProps) {
   const [message, setMessage] = useState("");
   const { activeColor, activeLightColor } = useMode();
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (message.trim()) {
+    if (message.trim() && !isLoading) {
       onSend(message);
       setMessage("");
     }
@@ -34,11 +39,13 @@ export function ChatInput({ onSend, onCallStart }: ChatInputProps) {
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Type your message..."
             className="flex-1 p-3 border-2 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+            disabled={isLoading}
           />
           <button
             type="submit"
-            className="p-3 text-black border-2 border-black rounded-lg shadow-brutal hover:shadow-brutal-lg transition-shadow"
+            className="p-3 text-black border-2 border-black rounded-lg shadow-brutal hover:shadow-brutal-lg transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ backgroundColor: activeColor }}
+            disabled={isLoading || !message.trim()}
           >
             <Send className="w-5 h-5" />
           </button>
