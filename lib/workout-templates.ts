@@ -24,34 +24,46 @@ export interface WorkoutPlan {
   difficulty: "beginner" | "intermediate" | "advanced";
 }
 
-export function formatWorkoutToMarkdown(workout: WorkoutPlan): string {
-  return `# ${workout.type.toUpperCase()} DAY WORKOUT 💪
-Duration: ${workout.duration} | Level: ${workout.difficulty}
+export const workoutQuestions = {
+  initial:
+    "I'll help you create a workout plan! First, what muscle group would you like to focus on? (legs, arms, chest, back, shoulders, core, cardio, or full-body)",
+  difficulty:
+    "Great choice! What's your fitness level? (beginner, intermediate, or advanced)",
+  duration:
+    "How much time do you have for this workout? (e.g., 30 minutes, 1 hour)",
+  equipment:
+    "Do you have access to a gym, or are we working with home equipment?",
+};
 
-## Warm-up (5-10 minutes)
+export function formatWorkoutPlanMessage(workout: WorkoutPlan): string {
+  return `Here's your personalized ${workout.type.toUpperCase()} workout! 💪
+
+⏱️ Duration: ${workout.duration}
+💪 Level: ${workout.difficulty}
+
+🔥 Warm-up (5-10 minutes):
 ${workout.warmup.map((w) => `• ${w}`).join("\n")}
 
-## Main Workout
+📋 Main Workout:
 ${workout.exercises
   .map(
-    (exercise, index) => `
-${index + 1}. **${exercise.name}**
-   - Sets: ${exercise.sets}
-   - Reps: ${exercise.reps}
-   ${exercise.notes ? `   - Note: ${exercise.notes}` : ""}`
+    (exercise, index) =>
+      `${index + 1}. ${exercise.name}
+   • ${exercise.sets} sets × ${exercise.reps}
+   ${exercise.notes ? `   • Note: ${exercise.notes}` : ""}`
   )
-  .join("\n")}
+  .join("\n\n")}
 
-## Cool-down (5-10 minutes)
+🧘‍♂️ Cool-down (5-10 minutes):
 ${workout.cooldown.map((c) => `• ${c}`).join("\n")}
 
-Remember to:
+⚠️ Remember:
 • Stay hydrated 💧
 • Maintain proper form
 • Listen to your body
 • Rest between sets (30-60 seconds)
 
-Good luck! 🎯`;
+Ready to crush this workout? Let me know if you need any clarification on the exercises! 💪`;
 }
 
 // Common warm-up and cool-down templates
