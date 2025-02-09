@@ -5,7 +5,7 @@ import { Nav } from "@/components/navbar";
 import { MemoryItem } from "@/components/memory/memory-item";
 import { FileGrid } from "@/components/memory/file-grid";
 
-const files = [
+const initialFiles = [
   { name: "Project Proposal", type: "pdf", size: "2.5 MB" },
   { name: "Team Meeting Notes", type: "docx", size: "1.2 MB" },
   { name: "Budget Spreadsheet", type: "xlsx", size: "3.7 MB" },
@@ -76,7 +76,7 @@ export default function MemoryPage() {
 
             <section className="w-full lg:w-1/2">
               <h2 className="text-2xl font-bold mb-4">Files</h2>
-              <FileGrid files={files} />
+              <FileGrid files={initialFiles} />
             </section>
           </div>
         </div>
