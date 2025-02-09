@@ -8,7 +8,13 @@ import { useMode } from "@/contexts/ModeContext";
 import { User, CoinsIcon as Coin, Copy } from "lucide-react";
 import { ConnectButton } from "thirdweb/react";
 import { client } from "@/lib/thirdweb";
-import { useActiveAccount, useActiveWallet } from "thirdweb/react";
+import {
+  useActiveAccount,
+  useActiveWallet,
+  useSendTransaction,
+  useReadContract,
+  useConnect,
+} from "thirdweb/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +30,8 @@ import {
 } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { baseSepolia } from "thirdweb/chains";
+import { getContract, prepareContractCall } from "thirdweb";
+import { formatUnits, parseUnits } from "ethers";
 
 const rubikDoodleShadow = Rubik_Doodle_Shadow({
   weight: "400",
@@ -43,11 +51,40 @@ const modeIcons = {
   wellness: "https://img.icons8.com/wired/64/spa-flower.png",
 };
 
+const TOKEN_CONTRACT = getContract({
+  client,
+  address: "0xe8D395EdCed58CdcA9f404db7BeD793c291F493f",
+  chain: baseSepolia,
+});
+
 // Separate client component for wallet functionality
 function WalletButton() {
   const router = useRouter();
   const account = useActiveAccount();
   const activeWallet = useActiveWallet();
+  const { mutate: sendTransaction } = useSendTransaction();
+  const { connect } = useConnect({ client });
+
+  const mintTokens = async () => {
+    if (!account?.address) return;
+
+    try {
+      const transaction = prepareContractCall({
+        contract: TOKEN_CONTRACT,
+        method: "function mintTo(address to, uint256 amount)",
+        params: [account.address, parseUnits("1000", 18)],
+      });
+      await sendTransaction(transaction);
+    } catch (error) {
+      console.error("Error minting tokens:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (account?.address) {
+      mintTokens();
+    }
+  }, [account?.address]);
 
   const handleLogout = async () => {
     try {
@@ -110,13 +147,25 @@ function WalletButton() {
 
 function CoinsDisplay() {
   const account = useActiveAccount();
+  const { data: balance } = useReadContract({
+    contract: TOKEN_CONTRACT,
+    method: "function balanceOf(address account) view returns (uint256)",
+    params: [account?.address || "0x0000000000000000000000000000000000000000"],
+  });
 
   if (!account) return null;
 
   return (
     <div className="flex items-center gap-2 px-3 py-1 bg-white border-2 border-black rounded-full shadow-brutal">
       <Coin className="w-6 h-6 text-black" />
-      <span className="text-lg font-bold">1000</span>
+      <span className="text-lg font-bold">
+        {balance && account?.address
+          ? Number(formatUnits(balance, 18)).toLocaleString(undefined, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })
+          : "..."}
+      </span>
     </div>
   );
 }
