@@ -14,6 +14,10 @@ interface ChatMessage {
   id: number;
   content: string | StreakDisplay;
   isUser: boolean;
+  attachment?: {
+    type: "image";
+    url: string;
+  };
 }
 
 // Modes that should use chat-like behavior
@@ -64,7 +68,7 @@ export function ChatInterface() {
     }
   }, [activeMode]);
 
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = async (content: string, attachment?: File) => {
     const isChatLike = CHAT_LIKE_MODES.includes(activeMode);
 
     // Add user message immediately
@@ -72,37 +76,54 @@ export function ChatInterface() {
       ...prev,
       [activeMode]: [
         ...prev[activeMode],
-        { id: Date.now(), content, isUser: true },
+        {
+          id: Date.now(),
+          content,
+          isUser: true,
+          attachment: attachment
+            ? {
+                type: "image",
+                url: URL.createObjectURL(attachment),
+              }
+            : undefined,
+        },
       ],
     }));
     setIsLoading(true);
     setIsStreaming(false);
 
     try {
+      // Create form data for file upload
+      const formData = new FormData();
+      formData.append("message", content);
+      formData.append("mode", activeMode);
+
+      // Convert history to a format that doesn't include local image URLs
+      const sanitizedHistory = messagesByMode[activeMode].map((msg) => ({
+        role: msg.isUser ? "user" : "assistant",
+        content:
+          typeof msg.content === "string"
+            ? msg.content
+            : JSON.stringify(msg.content),
+      }));
+      formData.append("history", JSON.stringify(sanitizedHistory));
+
+      if (attachment) {
+        formData.append("file", attachment);
+      }
+
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: content,
-          mode: activeMode,
-          history: messagesByMode[activeMode].map((msg) => ({
-            role: msg.isUser ? "user" : "assistant",
-            content:
-              typeof msg.content === "string"
-                ? msg.content
-                : JSON.stringify(msg.content),
-          })),
-        }),
+        body: formData,
       });
 
       if (!response.ok) {
         throw new Error("Failed to get response");
       }
 
-      // Check if response is JSON (template) or stream
       const contentType = response.headers.get("content-type");
+
+      // Handle different response types
       if (contentType?.includes("application/json")) {
         const templateData = await response.json();
         setMessagesByMode((prev) => ({
@@ -116,79 +137,23 @@ export function ChatInterface() {
         return;
       }
 
-      if (!response.body) {
-        throw new Error("No response body");
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      if (isChatLike) {
-        // Handle chat-like modes (multiple messages)
-        let currentContent = "";
-
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-
-          const text = decoder.decode(value);
-          const chunks = text
-            .split("\n---CHUNK---\n")
-            .filter((chunk) => chunk.trim());
-
-          for (const chunk of chunks) {
-            if (chunk.trim()) {
-              setMessagesByMode((prev) => ({
-                ...prev,
-                [activeMode]: [
-                  ...prev[activeMode],
-                  {
-                    id: Date.now() + Math.random(),
-                    content: chunk.trim(),
-                    isUser: false,
-                  },
-                ],
-              }));
-            }
-          }
-        }
-      } else {
-        // Handle regular modes (single streamed message)
-        const responseMessageId = Date.now();
-        setMessagesByMode((prev) => ({
-          ...prev,
-          [activeMode]: [
-            ...prev[activeMode],
-            { id: responseMessageId, content: "", isUser: false },
-          ],
-        }));
-
-        let accumulatedContent = "";
-
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-
-          const text = decoder.decode(value);
-          accumulatedContent += text;
-
-          setMessagesByMode((prev) => ({
-            ...prev,
-            [activeMode]: prev[activeMode].map((msg) =>
-              msg.id === responseMessageId
-                ? { ...msg, content: accumulatedContent }
-                : msg
-            ),
-          }));
-        }
-      }
+      // For text responses (including vision model responses)
+      const textResponse = await response.text();
+      setMessagesByMode((prev) => ({
+        ...prev,
+        [activeMode]: [
+          ...prev[activeMode],
+          { id: Date.now(), content: textResponse, isUser: false },
+        ],
+      }));
+      setIsLoading(false);
     } catch (error) {
+      console.error("Chat error:", error);
       toast({
         title: "Error",
         description: "Failed to get response. Please try again.",
         variant: "destructive",
       });
-      console.error("Chat error:", error);
     } finally {
       setIsLoading(false);
       setIsStreaming(false);
@@ -215,6 +180,7 @@ export function ChatInterface() {
                 content={message.content}
                 isUser={message.isUser}
                 activeColor={activeColor}
+                attachment={message.attachment}
               />
             ))}
             {isLoading && !isStreaming && (

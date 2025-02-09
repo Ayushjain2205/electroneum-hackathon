@@ -24,6 +24,10 @@ const openai = new OpenAI({
 // Modes that should use chat-like behavior
 const CHAT_LIKE_MODES = ["bff", "girlfriend"];
 
+// Add constants for model names at the top
+const OPENAI_MODEL = "gpt-4o-mini"; // Points to gpt-4o-mini-2024-07-18
+const OPENAI_VISION_MODEL = "gpt-4o"; // Points to gpt-4o-2024-08-06
+
 // Function to detect workout request
 function isWorkoutRequest(text: string): boolean {
   const workoutKeywords = [
@@ -141,7 +145,7 @@ async function handleWorkoutRequest(
     const equipment = message;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+      model: OPENAI_MODEL,
       messages: [
         {
           role: "system",
@@ -261,11 +265,15 @@ async function handleStreakRequest(): Promise<StreakDisplay> {
 
 export async function POST(request: Request) {
   try {
-    const { message, mode, history } = await request.json();
+    const formData = await request.formData();
+    const message = formData.get("message") as string;
+    const mode = formData.get("mode") as string;
+    const history = JSON.parse(formData.get("history") as string);
+    const file = formData.get("file") as File | null;
 
-    if (!message) {
+    if (!message && !file) {
       return NextResponse.json(
-        { error: "Message is required" },
+        { error: "Message or file is required" },
         { status: 400 }
       );
     }
@@ -273,6 +281,75 @@ export async function POST(request: Request) {
     const modeConfig = modeConfigs[mode];
     if (!modeConfig) {
       return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
+    }
+
+    // Handle image processing with vision model
+    if (file) {
+      try {
+        // Convert file to base64
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        const base64Image = buffer.toString("base64");
+        const mimeType = file.type;
+
+        // Prepare system message based on mode
+        const systemMessage = `${modeConfig.systemPrompt}
+
+Personality traits: ${modeConfig.personality}
+
+When analyzing images:
+1. Be detailed but concise
+2. Stay in character and maintain your persona's style
+3. If you notice any text in the image, mention it
+4. If you notice any people, describe them appropriately
+5. If asked about specific aspects, focus on those
+6. Keep responses engaging and natural`;
+
+        const completion = await openai.chat.completions.create({
+          model: OPENAI_VISION_MODEL,
+          messages: [
+            {
+              role: "system",
+              content: systemMessage,
+            },
+            ...history.slice(-5), // Only include last 5 messages for context
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: message || "What do you see in this image?",
+                },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: `data:${mimeType};base64,${base64Image}`,
+                  },
+                },
+              ],
+            },
+          ],
+          max_tokens: 500,
+          temperature: 0.7,
+        });
+
+        const response = completion.choices[0].message.content;
+        if (!response) {
+          throw new Error("No response generated");
+        }
+
+        return new Response(response, {
+          headers: {
+            "Content-Type": "text/plain",
+          },
+        });
+      } catch (error) {
+        console.error("Image processing error:", error);
+        return NextResponse.json(
+          { error: "Failed to process image: " + (error as Error).message },
+          { status: 500 }
+        );
+      }
     }
 
     // Handle streak requests
@@ -297,7 +374,7 @@ export async function POST(request: Request) {
       : `${modeConfig.systemPrompt}\n\nPersonality traits: ${modeConfig.personality}`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+      model: OPENAI_MODEL,
       messages: [
         {
           role: "system",
