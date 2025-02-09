@@ -4,6 +4,23 @@ import { useState } from "react";
 import Image from "next/image";
 import { CoinsIcon } from "lucide-react";
 import { useMode } from "@/contexts/ModeContext";
+import {
+  useActiveAccount,
+  useReadContract,
+  useSendTransaction,
+} from "thirdweb/react";
+import { getContract, prepareContractCall } from "thirdweb";
+import { formatUnits, parseUnits } from "ethers";
+import { useToast } from "@/hooks/use-toast";
+import { client } from "@/lib/thirdweb";
+import { baseSepolia } from "thirdweb/chains";
+import { Loader2 } from "lucide-react";
+
+const TOKEN_CONTRACT = getContract({
+  client,
+  address: "0xe8D395EdCed58CdcA9f404db7BeD793c291F493f",
+  chain: baseSepolia,
+});
 
 interface ShopCardProps {
   item: {
@@ -16,7 +33,65 @@ interface ShopCardProps {
 
 export function ShopCard({ item }: ShopCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isPurchasing, setIsPurchasing] = useState(false);
   const { activeColor } = useMode();
+  const { toast } = useToast();
+  const account = useActiveAccount();
+  const { mutate: sendTransaction } = useSendTransaction();
+  const { data: balance } = useReadContract({
+    contract: TOKEN_CONTRACT,
+    method: "function balanceOf(address account) view returns (uint256)",
+    params: [account?.address || "0x0000000000000000000000000000000000000000"],
+  });
+
+  const handlePurchase = async () => {
+    if (!account?.address) {
+      toast({
+        title: "Error",
+        description: "Please connect your wallet first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const userBalance = balance ? Number(formatUnits(balance, 18)) : 0;
+    if (userBalance < item.price) {
+      toast({
+        title: "Insufficient Balance",
+        description: "You don't have enough coins to purchase this item",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsPurchasing(true);
+      // For now, we'll just burn the tokens as a simple purchase mechanism
+      const transaction = prepareContractCall({
+        contract: TOKEN_CONTRACT,
+        method: "function burn(uint256 amount)",
+        params: [parseUnits(item.price.toString(), 18)],
+      });
+
+      await sendTransaction(transaction);
+      // Wait for one block confirmation
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      toast({
+        title: "✨ Item Minted Successfully! 🎉",
+        description: `Your ${item.name} has been minted to your collection 🌟`,
+      });
+    } catch (error) {
+      console.error("Error purchasing item:", error);
+      toast({
+        title: "Error",
+        description: "Failed to complete the purchase. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
 
   return (
     <div
@@ -41,10 +116,16 @@ export function ShopCard({ item }: ShopCardProps) {
         </div>
       )}
       <button
-        className="absolute bottom-2 right-2 flex items-center px-3 py-2 rounded-md font-bold transition-colors text-black border-2 border-black"
+        onClick={handlePurchase}
+        disabled={isPurchasing}
+        className="absolute bottom-2 right-2 flex items-center px-3 py-2 rounded-md font-bold transition-colors text-black border-2 border-black disabled:opacity-50 disabled:cursor-not-allowed"
         style={{ backgroundColor: activeColor }}
       >
-        <CoinsIcon className="w-4 h-4 mr-1" />
+        {isPurchasing ? (
+          <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+        ) : (
+          <CoinsIcon className="w-4 h-4 mr-1" />
+        )}
         <span>{item.price}</span>
       </button>
     </div>
