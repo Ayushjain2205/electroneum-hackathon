@@ -7,6 +7,7 @@ import { Rubik_Doodle_Shadow } from "next/font/google";
 import { useMode } from "@/contexts/ModeContext";
 import { User, CoinsIcon as Coin, Copy } from "lucide-react";
 import { ConnectButton } from "thirdweb/react";
+import { inAppWallet } from "thirdweb/wallets";
 import { client } from "@/lib/thirdweb";
 import {
   useActiveAccount,
@@ -32,6 +33,7 @@ import { useState, useEffect } from "react";
 import { baseSepolia } from "thirdweb/chains";
 import { getContract, prepareContractCall } from "thirdweb";
 import { formatUnits, parseUnits } from "ethers";
+import { useToast } from "@/hooks/use-toast";
 
 const rubikDoodleShadow = Rubik_Doodle_Shadow({
   weight: "400",
@@ -41,6 +43,15 @@ const rubikDoodleShadow = Rubik_Doodle_Shadow({
 const navItems = [
   { name: "Shop", href: "/shop" },
   { name: "Memory", href: "/memory" },
+];
+
+const wallets = [
+  inAppWallet({
+    smartAccount: {
+      chain: baseSepolia,
+      sponsorGas: true,
+    },
+  }),
 ];
 
 const modeIcons = {
@@ -64,9 +75,19 @@ function WalletButton() {
   const activeWallet = useActiveWallet();
   const { mutate: sendTransaction } = useSendTransaction();
   const { connect } = useConnect({ client });
+  const { toast } = useToast();
 
-  const mintTokens = async () => {
+  const mintTokens = async (isInitial = false) => {
     if (!account?.address) return;
+
+    if (isInitial) {
+      const lastMintDate = localStorage.getItem("lastMintDate");
+      const today = new Date().toDateString();
+
+      if (lastMintDate === today) {
+        return; // Already minted today
+      }
+    }
 
     try {
       const transaction = prepareContractCall({
@@ -74,15 +95,33 @@ function WalletButton() {
         method: "function mintTo(address to, uint256 amount)",
         params: [account.address, parseUnits("1000", 18)],
       });
-      await sendTransaction(transaction);
+
+      const tx = await sendTransaction(transaction);
+      // Wait for one block confirmation
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      if (isInitial) {
+        localStorage.setItem("lastMintDate", new Date().toDateString());
+      }
+
+      toast({
+        title: "Success! 🎉",
+        description: "1000 tokens have been minted to your wallet",
+        duration: 5000,
+      });
     } catch (error) {
       console.error("Error minting tokens:", error);
+      toast({
+        title: "Error",
+        description: "Failed to mint tokens. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   useEffect(() => {
     if (account?.address) {
-      mintTokens();
+      mintTokens(true); // Pass true for initial mint check
     }
   }, [account?.address]);
 
@@ -121,6 +160,13 @@ function WalletButton() {
               {account.address.slice(0, 6)}...{account.address.slice(-4)}
             </span>
             <Copy className="h-4 w-4 ml-2" />
+          </DropdownMenuItem>
+          <DropdownMenuSeparator className="bg-black" />
+          <DropdownMenuItem
+            className="hover:bg-gray-100 focus:bg-gray-100 focus:outline-none cursor-pointer"
+            onClick={() => mintTokens(false)}
+          >
+            Get 1000 Tokens
           </DropdownMenuItem>
           <DropdownMenuSeparator className="bg-black" />
           <div className="p-2">

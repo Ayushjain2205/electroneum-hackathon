@@ -3,6 +3,7 @@ import "./globals.css";
 import type { ReactNode } from "react";
 import { ModeProvider } from "@/contexts/ModeContext";
 import { ThirdwebProvider } from "thirdweb/react";
+import { Toaster } from "@/components/ui/toaster";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -19,7 +20,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" className={`${spaceGrotesk.variable} ${outfit.variable}`}>
       <body className="min-h-screen bg-[#FFFAF0] font-sans">
         <ThirdwebProvider>
-          <ModeProvider>{children}</ModeProvider>
+          <ModeProvider>
+            {children}
+            <Toaster />
+          </ModeProvider>
         </ThirdwebProvider>
       </body>
     </html>
