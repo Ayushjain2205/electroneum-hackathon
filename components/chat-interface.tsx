@@ -137,16 +137,71 @@ export function ChatInterface() {
         return;
       }
 
-      // For text responses (including vision model responses)
-      const textResponse = await response.text();
-      setMessagesByMode((prev) => ({
-        ...prev,
-        [activeMode]: [
-          ...prev[activeMode],
-          { id: Date.now(), content: textResponse, isUser: false },
-        ],
-      }));
-      setIsLoading(false);
+      if (isChatLike && contentType?.includes("text/event-stream")) {
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        if (!reader) {
+          throw new Error("No reader available");
+        }
+
+        setIsStreaming(true);
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const chunks = buffer.split("\n---CHUNK---\n");
+
+          // Process all complete chunks except the last one (which might be incomplete)
+          for (let i = 0; i < chunks.length - 1; i++) {
+            const chunk = chunks[i].trim();
+            if (chunk) {
+              setMessagesByMode((prev) => ({
+                ...prev,
+                [activeMode]: [
+                  ...prev[activeMode],
+                  {
+                    id: Date.now() + Math.random(),
+                    content: chunk,
+                    isUser: false,
+                  },
+                ],
+              }));
+            }
+          }
+
+          // Keep the last chunk in the buffer as it might be incomplete
+          buffer = chunks[chunks.length - 1];
+        }
+
+        // Process any remaining content in the buffer
+        if (buffer.trim()) {
+          setMessagesByMode((prev) => ({
+            ...prev,
+            [activeMode]: [
+              ...prev[activeMode],
+              {
+                id: Date.now() + Math.random(),
+                content: buffer.trim(),
+                isUser: false,
+              },
+            ],
+          }));
+        }
+      } else {
+        // For text responses (including vision model responses)
+        const textResponse = await response.text();
+        setMessagesByMode((prev) => ({
+          ...prev,
+          [activeMode]: [
+            ...prev[activeMode],
+            { id: Date.now(), content: textResponse, isUser: false },
+          ],
+        }));
+      }
     } catch (error) {
       console.error("Chat error:", error);
       toast({
