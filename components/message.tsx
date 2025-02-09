@@ -2,13 +2,15 @@ import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { StreakCard } from "./templates/streak-card";
 import { ManagerCard } from "./templates/manager-card";
+import { ShopCard } from "./templates/shop-card";
 import { type StreakDisplay } from "@/lib/streak-templates";
 import { type ManagerDisplay } from "@/lib/manager-templates";
+import { type ShopDisplay } from "@/lib/shop-templates";
 import { useState } from "react";
 import { X } from "lucide-react";
 
 interface MessageProps {
-  content: string | StreakDisplay | ManagerDisplay;
+  content: string | StreakDisplay | ManagerDisplay | ShopDisplay;
   isUser?: boolean;
   activeColor: string;
   attachment?: {
@@ -28,7 +30,7 @@ export function Message({
   // Helper to check if content is a template
   const isTemplate = (
     content: any
-  ): content is StreakDisplay | ManagerDisplay => {
+  ): content is StreakDisplay | ManagerDisplay | ShopDisplay => {
     return typeof content === "object" && "type" in content;
   };
 
@@ -82,6 +84,8 @@ export function Message({
                 <StreakCard data={content.data} />
               ) : content.type === "schedule" || content.type === "tasks" ? (
                 <ManagerCard type={content.type} data={content.data} />
+              ) : content.type === "products" ? (
+                <ShopCard {...content.data} />
               ) : null
             ) : (
               <ReactMarkdown

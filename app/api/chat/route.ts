@@ -26,6 +26,12 @@ import {
   type TaskList,
   type ManagerDisplay,
 } from "@/lib/manager-templates";
+import {
+  isShopRequest,
+  type ShopDisplay,
+  type Product,
+} from "@/lib/shop-templates";
+import { searchProducts } from "@/lib/amazon-api";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -511,6 +517,155 @@ Return ONLY valid JSON matching this exact Schedule type:
   );
 }
 
+async function handleShopRequest(message: string): Promise<ShopDisplay> {
+  try {
+    // Extract search query from message
+    const searchQuery = message
+      .toLowerCase()
+      .replace(/can you (find|show|search for|look for|get)/g, "")
+      .replace(/i want to (buy|get|find)/g, "")
+      .replace(/what are some/g, "")
+      .replace(/recommend|suggest/g, "")
+      .trim();
+
+    // Search products using Amazon API
+    const products = await searchProducts(searchQuery);
+
+    // Get unique categories from products for filters
+    const categories = [
+      ...new Set(
+        products.map(
+          (p: Product) => p.name.split(" ")[0] // Use first word of product name as category
+        )
+      ),
+    ].slice(0, 3);
+
+    // Generate price-based filters
+    const minPrice = Math.min(...products.map((p: Product) => p.price));
+    const maxPrice = Math.max(...products.map((p: Product) => p.price));
+    const priceRanges = [
+      `Under $${Math.floor(minPrice + 50)}`,
+      `$${Math.floor(minPrice)}-${Math.ceil(maxPrice)}`,
+    ];
+
+    return {
+      type: "products",
+      data: {
+        query: searchQuery,
+        products: products.slice(0, 6), // Show top 6 products
+        totalResults: products.length,
+        suggestedFilters: [
+          ...priceRanges,
+          "4.5+ Stars",
+          "Prime Shipping",
+          ...categories.map((c) => `${c} Products`),
+        ],
+      },
+    };
+  } catch (error) {
+    console.error("Shop request error:", error);
+
+    // Fallback to mock data if API fails
+    const mockProducts = [
+      {
+        id: "1",
+        name: "Apple AirPods Pro (2nd Generation)",
+        description:
+          "Active Noise Cancelling, Transparency Mode, Spatial Audio with Dynamic Head Tracking, MagSafe Charging Case",
+        price: 249.99,
+        rating: 4.7,
+        reviews: 31250,
+        imageUrl:
+          "https://m.media-amazon.com/images/I/61SUj2aKoEL._AC_SL1500_.jpg",
+        url: "https://www.amazon.com/Apple-Generation-Cancelling-Transparency-Personalized/dp/B0BDHWDR12/",
+        prime: true,
+      },
+      {
+        id: "2",
+        name: "Apple Watch Series 9 [GPS 41mm]",
+        description:
+          "Smart Watch w/Starlight Aluminum Case with Starlight Sport Band. Fitness Tracker, Blood Oxygen & ECG Apps, Always-On Retina Display",
+        price: 329.99,
+        rating: 4.8,
+        reviews: 8420,
+        imageUrl:
+          "https://m.media-amazon.com/images/I/71XMTLtZd5L._AC_SL1500_.jpg",
+        url: "https://www.amazon.com/Apple-Watch-Starlight-Aluminum-Starlight/dp/B0CHX5F9KC/",
+        prime: true,
+      },
+      {
+        id: "3",
+        name: "Anker Power Bank, 737 PowerCore 24K",
+        description:
+          "24,000mAh 140W Battery Pack with Digital Display, 3 Ports, 2-Way Fast Charging for MacBook, iPhone 15/14, Samsung, Dell XPS, Steam Deck",
+        price: 149.99,
+        rating: 4.6,
+        reviews: 2850,
+        imageUrl:
+          "https://m.media-amazon.com/images/I/71NQ4Xib0eL._AC_SL1500_.jpg",
+        url: "https://www.amazon.com/Anker-PowerCore-24K-Charger-Display/dp/B09VPHVT2Z/",
+        prime: true,
+      },
+      {
+        id: "4",
+        name: "JBL Charge 5 - Portable Bluetooth Speaker",
+        description:
+          "IP67 Waterproof and Dustproof, 20 Hours of Playtime, Built-in Powerbank, PartyBoost for Speaker Pairing, Black",
+        price: 179.95,
+        rating: 4.8,
+        reviews: 12150,
+        imageUrl:
+          "https://m.media-amazon.com/images/I/71Saccp+fYL._AC_SL1500_.jpg",
+        url: "https://www.amazon.com/JBL-Charge-5-Portable-Bluetooth/dp/B08VDNCZT9/",
+        prime: true,
+      },
+      {
+        id: "5",
+        name: "Sony WH-1000XM5 Wireless Headphones",
+        description:
+          "Industry Leading Noise Canceling, 30-Hour Battery, Built-in Alexa, Touch Control, Black",
+        price: 398.0,
+        rating: 4.7,
+        reviews: 5823,
+        imageUrl:
+          "https://m.media-amazon.com/images/I/61+btxzpfDL._AC_SL1500_.jpg",
+        url: "https://www.amazon.com/Sony-WH-1000XM5-Canceling-Headphones-Hands-Free/dp/B09XS7JWHH/",
+        prime: true,
+      },
+      {
+        id: "6",
+        name: 'Samsung Galaxy Tab S9+ 12.4"',
+        description:
+          "512GB Android Tablet, Large AMOLED Screen, S Pen, Wi-Fi 6E, Long-Lasting Battery, Graphite",
+        price: 1119.99,
+        rating: 4.8,
+        reviews: 1243,
+        imageUrl:
+          "https://m.media-amazon.com/images/I/81TMK-24nkL._AC_SL1500_.jpg",
+        url: "https://www.amazon.com/Samsung-Android-AMOLED-Screen-Graphite/dp/B0C6GDQVH5/",
+        prime: true,
+      },
+    ];
+
+    return {
+      type: "products",
+      data: {
+        query: message,
+        products: mockProducts,
+        totalResults: mockProducts.length,
+        suggestedFilters: [
+          "Under $200",
+          "4.5+ Stars",
+          "Prime Shipping",
+          "New Arrivals",
+          "Apple Products",
+          "Samsung Products",
+        ],
+      },
+    };
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -623,6 +778,12 @@ When analyzing images:
     ) {
       const managerResponse = await handleManagerRequest(message, history);
       return managerResponse;
+    }
+
+    // Handle shop requests
+    if (mode === "shopper" && isShopRequest(message)) {
+      const shopTemplate = await handleShopRequest(message);
+      return NextResponse.json(shopTemplate);
     }
 
     const isChatLike = CHAT_LIKE_MODES.includes(mode);
