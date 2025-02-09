@@ -55,11 +55,11 @@ const wallets = [
 ];
 
 const modeIcons = {
-  bff: "https://img.icons8.com/wired/64/like--v1.png",
+  bff: "https://img.icons8.com/wired/64/friends.png",
   manager: "https://img.icons8.com/wired/64/briefcase.png",
-  coach: "https://img.icons8.com/wired/64/brain.png",
-  nutritionist: "https://img.icons8.com/wired/64/apple.png",
-  wellness: "https://img.icons8.com/wired/64/spa-flower.png",
+  coach: "https://img.icons8.com/wired/64/dumbbell.png",
+  shopper: "https://img.icons8.com/wired/64/shopping-cart.png",
+  girlfriend: "https://img.icons8.com/wired/64/like--v1.png",
 };
 
 const TOKEN_CONTRACT = getContract({

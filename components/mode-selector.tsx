@@ -9,8 +9,8 @@ const modes: { id: ModeType; name: string }[] = [
   { id: "bff", name: "BFF" },
   { id: "manager", name: "Manager" },
   { id: "coach", name: "Coach" },
-  { id: "nutritionist", name: "Nutritionist" },
-  { id: "wellness", name: "Wellness" },
+  { id: "shopper", name: "Shopper" },
+  { id: "girlfriend", name: "Girlfriend" },
 ];
 
 const traits = [
