@@ -15,6 +15,9 @@ interface ChatMessage {
   isUser: boolean;
 }
 
+// Modes that should use chat-like behavior
+const CHAT_LIKE_MODES = ["bff", "girlfriend"];
+
 export function ChatInterface() {
   const { activeMode, activeColor, activeLighterColor } = useMode();
   const { toast } = useToast();
@@ -61,6 +64,8 @@ export function ChatInterface() {
   }, [activeMode]);
 
   const handleSendMessage = async (content: string) => {
+    const isChatLike = CHAT_LIKE_MODES.includes(activeMode);
+
     // Add user message immediately
     setMessagesByMode((prev) => ({
       ...prev,
@@ -98,37 +103,64 @@ export function ChatInterface() {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let isFirstChunk = true;
 
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+      if (isChatLike) {
+        // Handle chat-like modes (multiple messages)
+        let currentContent = "";
 
-        const text = decoder.decode(value);
-        const chunks = text
-          .split("\n---CHUNK---\n")
-          .filter((chunk) => chunk.trim());
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
 
-        for (const chunk of chunks) {
-          if (isFirstChunk) {
-            setIsLoading(false);
-            setIsStreaming(true);
-            isFirstChunk = false;
+          const text = decoder.decode(value);
+          const chunks = text
+            .split("\n---CHUNK---\n")
+            .filter((chunk) => chunk.trim());
+
+          for (const chunk of chunks) {
+            if (chunk.trim()) {
+              setMessagesByMode((prev) => ({
+                ...prev,
+                [activeMode]: [
+                  ...prev[activeMode],
+                  {
+                    id: Date.now() + Math.random(),
+                    content: chunk.trim(),
+                    isUser: false,
+                  },
+                ],
+              }));
+            }
           }
+        }
+      } else {
+        // Handle regular modes (single streamed message)
+        const responseMessageId = Date.now();
+        setMessagesByMode((prev) => ({
+          ...prev,
+          [activeMode]: [
+            ...prev[activeMode],
+            { id: responseMessageId, content: "", isUser: false },
+          ],
+        }));
 
-          // Create a new message for each chunk
+        let accumulatedContent = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          const text = decoder.decode(value);
+          accumulatedContent += text;
+
           setMessagesByMode((prev) => ({
             ...prev,
-            [activeMode]: [
-              ...prev[activeMode],
-              { id: Date.now() + Math.random(), content: chunk, isUser: false },
-            ],
+            [activeMode]: prev[activeMode].map((msg) =>
+              msg.id === responseMessageId
+                ? { ...msg, content: accumulatedContent }
+                : msg
+            ),
           }));
-
-          // Add a small delay between messages to simulate typing
-          await new Promise((resolve) =>
-            setTimeout(resolve, Math.random() * 300 + 200)
-          );
         }
       }
     } catch (error) {
