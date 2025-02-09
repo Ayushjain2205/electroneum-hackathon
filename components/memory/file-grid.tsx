@@ -1,11 +1,15 @@
+"use client";
+
 import { useMode } from "@/contexts/ModeContext";
-import { FileText, FileImage, File, Upload } from "lucide-react";
+import { FileText, FileImage, File, Upload, Plus, X } from "lucide-react";
 import { useState, useRef } from "react";
+import type React from "react"; // Added import for React
 
 interface FileItemProps {
   name: string;
   type: string;
   size: string;
+  content?: string;
 }
 
 function FileIcon({ type }: { type: string }) {
@@ -19,6 +23,8 @@ function FileIcon({ type }: { type: string }) {
     case "jpg":
     case "gif":
       return <FileImage className="w-8 h-8" />;
+    case "md":
+      return <FileText className="w-8 h-8" />;
     default:
       return <File className="w-8 h-8" />;
   }
@@ -51,6 +57,9 @@ export function FileGrid({ files: initialFiles }: FileGridProps) {
   const { activeColor } = useMode();
   const [files, setFiles] = useState<FileItemProps[]>(initialFiles);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isAddingFile, setIsAddingFile] = useState(false);
+  const [newFileName, setNewFileName] = useState("");
+  const [newFileContent, setNewFileContent] = useState("");
 
   const handleUpload = () => {
     fileInputRef.current?.click();
@@ -65,6 +74,25 @@ export function FileGrid({ files: initialFiles }: FileGridProps) {
         size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
       }));
       setFiles((prevFiles) => [...prevFiles, ...newFiles]);
+    }
+  };
+
+  const handleAddFile = () => {
+    setIsAddingFile(true);
+  };
+
+  const handleSaveNewFile = () => {
+    if (newFileName && newFileContent) {
+      const newFile: FileItemProps = {
+        name: newFileName.endsWith(".md") ? newFileName : `${newFileName}.md`,
+        type: "md",
+        size: `${(newFileContent.length / 1024).toFixed(2)} KB`,
+        content: newFileContent,
+      };
+      setFiles((prevFiles) => [...prevFiles, newFile]);
+      setIsAddingFile(false);
+      setNewFileName("");
+      setNewFileContent("");
     }
   };
 
@@ -91,7 +119,52 @@ export function FileGrid({ files: initialFiles }: FileGridProps) {
             multiple
           />
         </div>
+        <div className="flex flex-col items-center justify-center p-2">
+          <button
+            onClick={handleAddFile}
+            className="w-16 h-16 mb-2 flex items-center justify-center bg-white border-2 border-black rounded-lg shadow-brutal transition-transform hover:scale-105"
+            style={{ backgroundColor: activeColor }}
+          >
+            <Plus className="w-8 h-8 text-white" />
+          </button>
+          <div className="text-sm font-medium">Add File</div>
+        </div>
       </div>
+      {isAddingFile && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white border-2 border-black rounded-lg shadow-brutal p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">Add New Markdown File</h3>
+              <button
+                onClick={() => setIsAddingFile(false)}
+                className="text-gray-500 hover:text-black"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <input
+              type="text"
+              placeholder="File name (e.g., my-notes.md)"
+              value={newFileName}
+              onChange={(e) => setNewFileName(e.target.value)}
+              className="w-full p-2 mb-4 border-2 border-black rounded"
+            />
+            <textarea
+              placeholder="File content"
+              value={newFileContent}
+              onChange={(e) => setNewFileContent(e.target.value)}
+              className="w-full p-2 mb-4 border-2 border-black rounded h-40"
+            />
+            <button
+              onClick={handleSaveNewFile}
+              className="w-full p-2 text-white rounded transition-transform hover:scale-105"
+              style={{ backgroundColor: activeColor }}
+            >
+              Save File
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
