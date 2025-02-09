@@ -96,19 +96,8 @@ export function ChatInterface() {
         throw new Error("No response body");
       }
 
-      // Create a new message for the assistant's response
-      const responseMessageId = Date.now();
-      setMessagesByMode((prev) => ({
-        ...prev,
-        [activeMode]: [
-          ...prev[activeMode],
-          { id: responseMessageId, content: "", isUser: false },
-        ],
-      }));
-
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let accumulatedContent = "";
       let isFirstChunk = true;
 
       while (true) {
@@ -116,23 +105,31 @@ export function ChatInterface() {
         if (done) break;
 
         const text = decoder.decode(value);
-        accumulatedContent += text;
+        const chunks = text
+          .split("\n---CHUNK---\n")
+          .filter((chunk) => chunk.trim());
 
-        if (isFirstChunk) {
-          setIsLoading(false);
-          setIsStreaming(true);
-          isFirstChunk = false;
+        for (const chunk of chunks) {
+          if (isFirstChunk) {
+            setIsLoading(false);
+            setIsStreaming(true);
+            isFirstChunk = false;
+          }
+
+          // Create a new message for each chunk
+          setMessagesByMode((prev) => ({
+            ...prev,
+            [activeMode]: [
+              ...prev[activeMode],
+              { id: Date.now() + Math.random(), content: chunk, isUser: false },
+            ],
+          }));
+
+          // Add a small delay between messages to simulate typing
+          await new Promise((resolve) =>
+            setTimeout(resolve, Math.random() * 300 + 200)
+          );
         }
-
-        // Update the last message with accumulated content
-        setMessagesByMode((prev) => ({
-          ...prev,
-          [activeMode]: prev[activeMode].map((msg) =>
-            msg.id === responseMessageId
-              ? { ...msg, content: accumulatedContent }
-              : msg
-          ),
-        }));
       }
     } catch (error) {
       toast({
