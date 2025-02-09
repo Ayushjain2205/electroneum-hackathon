@@ -1,8 +1,10 @@
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { StreakCard } from "./templates/streak-card";
+import { type StreakDisplay } from "@/lib/streak-templates";
 
 interface MessageProps {
-  content: string;
+  content: string | StreakDisplay;
   isUser?: boolean;
   activeColor: string;
 }
@@ -12,6 +14,11 @@ export function Message({
   isUser = false,
   activeColor,
 }: MessageProps) {
+  // Helper to check if content is a template
+  const isTemplate = (content: any): content is StreakDisplay => {
+    return typeof content === "object" && "type" in content;
+  };
+
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
@@ -22,7 +29,12 @@ export function Message({
         style={{ backgroundColor: isUser ? activeColor : undefined }}
       >
         {isUser ? (
-          <p className="text-base">{content}</p>
+          <p className="text-base">{content as string}</p>
+        ) : isTemplate(content) ? (
+          // Render appropriate template based on type
+          content.type === "streak" ? (
+            <StreakCard data={content.data} />
+          ) : null
         ) : (
           <ReactMarkdown
             className="text-base prose prose-neutral max-w-none"
@@ -53,7 +65,7 @@ export function Message({
               },
             }}
           >
-            {content}
+            {content as string}
           </ReactMarkdown>
         )}
       </div>

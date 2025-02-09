@@ -14,6 +14,7 @@ import {
   isStreakRequest,
   formatStreakMessage,
   type StreakData,
+  type StreakDisplay,
 } from "@/lib/streak-templates";
 
 const openai = new OpenAI({
@@ -235,7 +236,7 @@ async function handleRegularMode(
   }
 }
 
-async function handleStreakRequest(): Promise<string> {
+async function handleStreakRequest(): Promise<StreakDisplay> {
   // In a real app, this would fetch from a database
   // For now, we'll return mock data
   const mockStreak: StreakData = {
@@ -252,7 +253,10 @@ async function handleStreakRequest(): Promise<string> {
     },
   };
 
-  return formatStreakMessage(mockStreak);
+  return {
+    type: "streak",
+    data: mockStreak,
+  };
 }
 
 export async function POST(request: Request) {
@@ -273,12 +277,8 @@ export async function POST(request: Request) {
 
     // Handle streak requests
     if (isStreakRequest(message)) {
-      const streakMessage = await handleStreakRequest();
-      return new Response(streakMessage, {
-        headers: {
-          "Content-Type": "text/plain",
-        },
-      });
+      const streakTemplate = await handleStreakRequest();
+      return NextResponse.json(streakTemplate);
     }
 
     // Special handling for workout requests in coach mode

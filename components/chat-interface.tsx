@@ -8,10 +8,11 @@ import { useMode } from "@/contexts/ModeContext";
 import { modeConfigs } from "@/lib/mode-config";
 import { useToast } from "@/hooks/use-toast";
 import { type ModeType } from "@/lib/colors";
+import { type StreakDisplay } from "@/lib/streak-templates";
 
 interface ChatMessage {
   id: number;
-  content: string;
+  content: string | StreakDisplay;
   isUser: boolean;
 }
 
@@ -88,13 +89,31 @@ export function ChatInterface() {
           mode: activeMode,
           history: messagesByMode[activeMode].map((msg) => ({
             role: msg.isUser ? "user" : "assistant",
-            content: msg.content,
+            content:
+              typeof msg.content === "string"
+                ? msg.content
+                : JSON.stringify(msg.content),
           })),
         }),
       });
 
       if (!response.ok) {
         throw new Error("Failed to get response");
+      }
+
+      // Check if response is JSON (template) or stream
+      const contentType = response.headers.get("content-type");
+      if (contentType?.includes("application/json")) {
+        const templateData = await response.json();
+        setMessagesByMode((prev) => ({
+          ...prev,
+          [activeMode]: [
+            ...prev[activeMode],
+            { id: Date.now(), content: templateData, isUser: false },
+          ],
+        }));
+        setIsLoading(false);
+        return;
       }
 
       if (!response.body) {
