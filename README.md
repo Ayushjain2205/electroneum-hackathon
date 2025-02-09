@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Zoey - Your AI Companion for Personal Growth
 
-## Getting Started
+Zoey transforms personal development into an engaging journey by combining emotional intelligence with gamification elements. Through a unique blend of AI companionship and blockchain technology, users can track their progress, earn rewards, and receive genuine emotional support while developing key life attributes.
 
-First, run the development server:
+## 🌟 Features
+
+### Attribute Development System
+
+Users grow across five fundamental attributes (0-100 scale):
+
+- **🫂 Empathy**: Develop emotional intelligence and relationship skills
+- **🧠 Wisdom**: Enhance knowledge and decision-making capabilities
+- **⚡ Energy**: Boost motivation and maintain vitality
+- **🎯 Discipline**: Improve focus and form positive habits
+- **✨ Creativity**: Foster innovation and self-expression
+
+### 🎮 Gamified Experience
+
+- **Virtual Economy**: Earn and spend coins through daily activities and achievements
+- **Special Abilities**: Unlock powerful features to enhance your growth journey
+- **Progressive Rewards**: Stay motivated with an engaging reward system
+- **Achievement Tracking**: Visualize and celebrate your progress
+
+### 🤝 AI Companion Features
+
+- Empathetic conversations tailored to your emotional state
+- Mood-based responses and personalized motivation
+- Goal-setting assistance and progress tracking
+- Task management and habit formation support
+
+## 🛠 Technical Stack
+
+- **Frontend**: Next.js
+- **AI Model**: LLaMA
+- **Blockchain**: Base (Sepolia Testnet)
+- **Smart Contract**: [View on BlockScout](https://base-sepolia.blockscout.com/address/0xe8D395EdCed58CdcA9f404db7BeD793c291F493f)
+- **AI Integration**: Gaia
+- **Wallet Management**: CDP AgentKit
+- **Deployment**: Autonome
+
+## 🚀 Getting Started
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/yourusername/zoey-ai-companion
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Set up environment variables:
+
+```bash
+cp .env.example .env.local
+# Add your API keys and configuration
+```
+
+4. Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit [http://localhost:3000](http://localhost:3000) to see your local instance of Zoey.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🌐 Architecture
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Zoey combines several cutting-edge technologies:
 
-## Learn More
+- Each user is paired with a dedicated AI companion instance powered by LLaMA
+- User interactions and rewards are tracked on the Base blockchain
+- Autonomous actions and purchases are handled through CDP AgentKit
+- Natural conversation flow is enabled through Gaia integration
 
-To learn more about Next.js, take a look at the following resources:
+## 🤝 Contributing
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📄 License
 
-## Deploy on Vercel
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🙏 Acknowledgments
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Base for providing the blockchain infrastructure
+- LLaMA team for the powerful language model
+- CDP AgentKit for wallet management capabilities
+- Gaia for AI integration support
+
+---
+
+Built with ❤️ for making personal development engaging and accessible to everyone.
