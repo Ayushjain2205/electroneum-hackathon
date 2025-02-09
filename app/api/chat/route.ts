@@ -16,6 +16,16 @@ import {
   type StreakData,
   type StreakDisplay,
 } from "@/lib/streak-templates";
+import {
+  isScheduleRequest,
+  isTaskRequest,
+  managerQuestions,
+  formatScheduleMessage,
+  formatTaskListMessage,
+  type Schedule,
+  type TaskList,
+  type ManagerDisplay,
+} from "@/lib/manager-templates";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -263,6 +273,244 @@ async function handleStreakRequest(): Promise<StreakDisplay> {
   };
 }
 
+async function handleManagerRequest(
+  message: string,
+  history: any[]
+): Promise<Response> {
+  // If this is a direct schedule query, generate a schedule immediately
+  const lowercaseMessage = message.toLowerCase();
+  if (
+    lowercaseMessage.includes("my schedule") ||
+    lowercaseMessage.includes("what do i have") ||
+    lowercaseMessage.includes("what's on") ||
+    lowercaseMessage.includes("whats on")
+  ) {
+    const completion = await openai.chat.completions.create({
+      model: OPENAI_MODEL,
+      messages: [
+        {
+          role: "system",
+          content: `You are a scheduling expert. Generate a schedule based on typical business hours and common work activities.
+Return ONLY valid JSON matching this exact Schedule type:
+{
+  "type": "daily",
+  "blocks": [
+    {
+      "startTime": "09:00",
+      "endTime": "10:30",
+      "activity": "string",
+      "type": "meeting" | "focus" | "break" | "admin",
+      "participants": ["string"] (optional),
+      "notes": "string" (optional)
+    }
+  ],
+  "date": "${new Date().toISOString().split("T")[0]}",
+  "totalHours": number,
+  "focusTime": number,
+  "meetingTime": number
+}`,
+        },
+        {
+          role: "user",
+          content: `Create a daily schedule for today (${
+            new Date().toISOString().split("T")[0]
+          }) with:
+- A mix of meetings, focus time, and breaks
+- Start time around 9 AM
+- End time around 5 PM
+- Include lunch break
+- Good balance of focus time and meetings`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+    });
+
+    if (!completion.choices[0].message.content) {
+      throw new Error("No schedule generated");
+    }
+
+    try {
+      const schedule = JSON.parse(
+        completion.choices[0].message.content
+      ) as Schedule;
+
+      // Validate required fields
+      if (
+        !schedule.type ||
+        !schedule.blocks ||
+        !schedule.date ||
+        typeof schedule.totalHours !== "number" ||
+        typeof schedule.focusTime !== "number" ||
+        typeof schedule.meetingTime !== "number"
+      ) {
+        throw new Error("Invalid schedule format");
+      }
+
+      return NextResponse.json({
+        type: "schedule",
+        data: {
+          ...schedule,
+          type: schedule.type || "daily", // Ensure type exists
+          date: schedule.date || new Date().toISOString().split("T")[0], // Ensure date exists
+        },
+      } as ManagerDisplay);
+    } catch (error) {
+      console.error("Schedule parsing error:", error);
+      return new Response(
+        "I had trouble generating your schedule. Let's try again with specific preferences. When would you like your day to start?",
+        { headers: { "Content-Type": "text/plain" } }
+      );
+    }
+  }
+
+  // If this is the initial manager request, start the flow
+  if (isScheduleRequest(message) || isTaskRequest(message)) {
+    return new Response(managerQuestions.initial, {
+      headers: { "Content-Type": "text/plain" },
+    });
+  }
+
+  // Check if we're in the middle of a manager flow
+  const lastAssistantMessage = [...history]
+    .reverse()
+    .find((msg) => msg.role === "assistant")?.content;
+
+  if (lastAssistantMessage === managerQuestions.initial) {
+    const choice = message.toLowerCase();
+    if (choice.includes("schedule")) {
+      return new Response(managerQuestions.scheduleType, {
+        headers: { "Content-Type": "text/plain" },
+      });
+    } else if (choice.includes("task")) {
+      return new Response(managerQuestions.taskPriority, {
+        headers: { "Content-Type": "text/plain" },
+      });
+    } else {
+      return new Response(
+        "Please choose one of: create schedule, manage tasks, or discuss deliverables.",
+        { headers: { "Content-Type": "text/plain" } }
+      );
+    }
+  }
+
+  if (lastAssistantMessage === managerQuestions.scheduleType) {
+    const scheduleType = message.toLowerCase();
+    if (!["daily", "weekly", "project"].includes(scheduleType)) {
+      return new Response(
+        "Please specify the schedule type as daily, weekly, or project.",
+        { headers: { "Content-Type": "text/plain" } }
+      );
+    }
+    return new Response(managerQuestions.timePreference, {
+      headers: { "Content-Type": "text/plain" },
+    });
+  }
+
+  if (lastAssistantMessage === managerQuestions.timePreference) {
+    return new Response(managerQuestions.workStyle, {
+      headers: { "Content-Type": "text/plain" },
+    });
+  }
+
+  if (lastAssistantMessage === managerQuestions.workStyle) {
+    // Generate schedule based on preferences
+    const scheduleType = history
+      .find(
+        (msg) =>
+          msg.role === "user" &&
+          ["daily", "weekly", "project"].includes(msg.content.toLowerCase())
+      )
+      ?.content.toLowerCase();
+
+    const startTime = history.find(
+      (msg) =>
+        msg.role === "user" &&
+        history[history.indexOf(msg) - 1].content ===
+          managerQuestions.timePreference
+    )?.content;
+
+    const workStyle = message;
+
+    const completion = await openai.chat.completions.create({
+      model: OPENAI_MODEL,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a scheduling expert. Generate a schedule based on the user's preferences. Return ONLY valid JSON matching the Schedule type with no additional text.",
+        },
+        {
+          role: "user",
+          content: `Create a ${scheduleType} schedule starting at ${startTime} with ${workStyle} work style preference.`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+    });
+
+    if (!completion.choices[0].message.content) {
+      throw new Error("No schedule generated");
+    }
+
+    const schedule = JSON.parse(
+      completion.choices[0].message.content
+    ) as Schedule;
+    return NextResponse.json({
+      type: "schedule",
+      data: schedule,
+    } as ManagerDisplay);
+  }
+
+  if (lastAssistantMessage === managerQuestions.taskPriority) {
+    // Generate task list based on priority preference
+    const priority = message.toLowerCase();
+    if (!["high", "medium", "low"].includes(priority)) {
+      return new Response(
+        "Please specify the priority as high, medium, or low.",
+        {
+          headers: { "Content-Type": "text/plain" },
+        }
+      );
+    }
+
+    const completion = await openai.chat.completions.create({
+      model: OPENAI_MODEL,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a task management expert. Generate a task list based on the user's priority preference. Return ONLY valid JSON matching the TaskList type with no additional text.",
+        },
+        {
+          role: "user",
+          content: `Create a task list focusing on ${priority} priority tasks for today.`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+    });
+
+    if (!completion.choices[0].message.content) {
+      throw new Error("No task list generated");
+    }
+
+    const taskList = JSON.parse(
+      completion.choices[0].message.content
+    ) as TaskList;
+    return NextResponse.json({
+      type: "tasks",
+      data: taskList,
+    } as ManagerDisplay);
+  }
+
+  // If we get here, something went wrong with the flow
+  return new Response(
+    "I lost track of our conversation. Let's start over! What would you like to do? (create schedule, manage tasks, or discuss deliverables)",
+    { headers: { "Content-Type": "text/plain" } }
+  );
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -366,6 +614,15 @@ When analyzing images:
           "Content-Type": "text/plain",
         },
       });
+    }
+
+    // In the POST function, add manager mode handling similar to coach mode
+    if (
+      mode === "manager" &&
+      (isScheduleRequest(message) || isTaskRequest(message))
+    ) {
+      const managerResponse = await handleManagerRequest(message, history);
+      return managerResponse;
     }
 
     const isChatLike = CHAT_LIKE_MODES.includes(mode);

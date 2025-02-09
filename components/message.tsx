@@ -1,12 +1,14 @@
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { StreakCard } from "./templates/streak-card";
+import { ManagerCard } from "./templates/manager-card";
 import { type StreakDisplay } from "@/lib/streak-templates";
+import { type ManagerDisplay } from "@/lib/manager-templates";
 import { useState } from "react";
 import { X } from "lucide-react";
 
 interface MessageProps {
-  content: string | StreakDisplay;
+  content: string | StreakDisplay | ManagerDisplay;
   isUser?: boolean;
   activeColor: string;
   attachment?: {
@@ -24,7 +26,9 @@ export function Message({
   const [isImageExpanded, setIsImageExpanded] = useState(false);
 
   // Helper to check if content is a template
-  const isTemplate = (content: any): content is StreakDisplay => {
+  const isTemplate = (
+    content: any
+  ): content is StreakDisplay | ManagerDisplay => {
     return typeof content === "object" && "type" in content;
   };
 
@@ -76,6 +80,8 @@ export function Message({
             ) : isTemplate(content) ? (
               content.type === "streak" ? (
                 <StreakCard data={content.data} />
+              ) : content.type === "schedule" || content.type === "tasks" ? (
+                <ManagerCard type={content.type} data={content.data} />
               ) : null
             ) : (
               <ReactMarkdown
