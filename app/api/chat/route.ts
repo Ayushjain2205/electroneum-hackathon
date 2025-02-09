@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { modeConfigs } from "@/lib/mode-config";
+import { type ModeType } from "@/lib/colors";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// Modes that should use chat-like behavior
+const CHAT_LIKE_MODES = ["bff", "girlfriend"];
 
 // Function to detect if text represents a natural break in conversation
 function isNaturalBreak(text: string): boolean {
@@ -18,6 +22,56 @@ function isNaturalBreak(text: string): boolean {
   if (text.includes("\n\n")) return true;
 
   return false;
+}
+
+async function handleChatLikeMode(
+  completion: any,
+  controller: ReadableStreamDefaultController
+) {
+  let currentChunk = "";
+  let lastChunkTime = Date.now();
+
+  for await (const chunk of completion) {
+    const content = chunk.choices[0]?.delta?.content || "";
+    currentChunk += content;
+
+    // Split on natural breaks or when chunk gets too long
+    if (
+      (currentChunk.length > 15 && isNaturalBreak(currentChunk)) ||
+      currentChunk.length > 150
+    ) {
+      if (currentChunk.trim()) {
+        // Shorter delay for more responsive feel
+        const timeSinceLastChunk = Date.now() - lastChunkTime;
+        const delay = Math.max(150, 300 - timeSinceLastChunk);
+
+        if (timeSinceLastChunk < delay) {
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+
+        controller.enqueue(currentChunk.trim() + "\n---CHUNK---\n");
+        currentChunk = "";
+        lastChunkTime = Date.now();
+      }
+    }
+  }
+
+  // Send any remaining content
+  if (currentChunk.trim()) {
+    controller.enqueue(currentChunk.trim() + "\n---CHUNK---\n");
+  }
+}
+
+async function handleRegularMode(
+  completion: any,
+  controller: ReadableStreamDefaultController
+) {
+  for await (const chunk of completion) {
+    const content = chunk.choices[0]?.delta?.content || "";
+    if (content) {
+      controller.enqueue(content);
+    }
+  }
 }
 
 export async function POST(request: Request) {
@@ -36,12 +90,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
     }
 
+    const isChatLike = CHAT_LIKE_MODES.includes(mode);
+    const systemPrompt = isChatLike
+      ? `${modeConfig.systemPrompt}\n\nPersonality traits: ${modeConfig.personality}\n\nImportant: Write naturally and conversationally. Use emojis occasionally. Keep responses concise and engaging.`
+      : `${modeConfig.systemPrompt}\n\nPersonality traits: ${modeConfig.personality}`;
+
     const completion = await openai.chat.completions.create({
       model: "gpt-4-turbo-preview",
       messages: [
         {
           role: "system",
-          content: `${modeConfig.systemPrompt}\n\nPersonality traits: ${modeConfig.personality}\n\nImportant: Write naturally and conversationally. Use emojis occasionally. Keep responses concise and engaging.`,
+          content: systemPrompt,
         },
         ...history,
         { role: "user", content: message },
@@ -53,39 +112,11 @@ export async function POST(request: Request) {
 
     const stream = new ReadableStream({
       async start(controller) {
-        let currentChunk = "";
-        let lastChunkTime = Date.now();
-
-        for await (const chunk of completion) {
-          const content = chunk.choices[0]?.delta?.content || "";
-          currentChunk += content;
-
-          // Split on natural breaks or when chunk gets too long
-          if (
-            (currentChunk.length > 15 && isNaturalBreak(currentChunk)) ||
-            currentChunk.length > 150
-          ) {
-            if (currentChunk.trim()) {
-              // Shorter delay for more responsive feel
-              const timeSinceLastChunk = Date.now() - lastChunkTime;
-              const delay = Math.max(150, 300 - timeSinceLastChunk);
-
-              if (timeSinceLastChunk < delay) {
-                await new Promise((resolve) => setTimeout(resolve, delay));
-              }
-
-              controller.enqueue(currentChunk.trim() + "\n---CHUNK---\n");
-              currentChunk = "";
-              lastChunkTime = Date.now();
-            }
-          }
+        if (isChatLike) {
+          await handleChatLikeMode(completion, controller);
+        } else {
+          await handleRegularMode(completion, controller);
         }
-
-        // Send any remaining content
-        if (currentChunk.trim()) {
-          controller.enqueue(currentChunk.trim() + "\n---CHUNK---\n");
-        }
-
         controller.close();
       },
     });
